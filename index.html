@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTB.GAMES Download page</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #a0a0a0;
+            font-size: 1rem;
+        }
+
+        /* Játékkártyák rácsa - Megakadályozza a széthúzást 1 elemnél is! */
+        .games-grid {
+            display: grid;
+            /* auto-fill: nem engedi 1 elemnél, hogy kitöltse a teljes sort */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 350px)); 
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: start;
+            justify-content: center; /* Ha csak kevés van, középre igazítja (ha balra szeretnéd, cseréld: flex-start) */
+        }
+
+        /* Egy kocka / kártya stílusa */
+        .game-card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .game-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Kép beállításai */
+        .game-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background-color: #2a2a2a;
+            display: block;
+        }
+
+        .game-info {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-title {
+            font-size: 1.3rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .short-desc {
+            color: #b0b0b0;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .click-hint {
+            font-size: 0.8rem;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        /* Animált kinyíló rész */
+        .details-content {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 20px; 
+            margin-top: 0;
+            background-color: #181818;
+            border-top: 1px solid transparent;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out, margin-top 0.4s ease-in-out, border-color 0.4s ease;
+        }
+
+        .game-card.active .details-content {
+            max-height: 1000px; 
+            padding: 20px 20px;
+            margin-top: 10px;
+            border-top-color: #333;
+        }
+
+        .long-desc {
+            color: #d0d0d0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 0;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>MTB.GAMES</h1>
+    <p class="subtitle">All MTB.GAMES's games in one place.</p>
+</header>
+
+<main class="games-grid">
+
+    <!-- 1. JÁTÉK -->
+    <div class="game-card">
+        <img src="downloads/Valley Rancher.png" alt="Valley Rancher" class="game-img">
+        <div class="game-info">
+            <h2 class="game-title">Valley Rancher</h2>
+            <p class="short-desc">A farming game where you can plant crops, raise animals, and even engage in illegal activities.</p>
+            <span class="click-hint"></span>
+        </div>
+        <div class="details-content">
+            <p class="long-desc">
+                Lépj be a jövő versenypályáira! A Cyber Racer 2088-ban egyedi cyberpunk autókat tuningolhatsz,
+                több mint 20 pályán mérheted össze a tudásod, és kipróbálhatod a többjátékos módot is.
+            </p>
+            <a href="downloads/jatek1.zip" download class="download-btn">Letöltés (.zip)</a>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const cards = document.querySelectorAll('.game-card');
+
+    cards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.classList.contains('download-btn')) {
+                return;
+            }
+
+            const isActive = this.classList.contains('active');
+
+            cards.forEach(c => {
+                c.classList.remove('active');
+                const hint = c.querySelector('.click-hint');
+                if (hint) hint.textContent = '';
+            });
+
+            if (!isActive) {
+                this.classList.add('active');
+                const currentHint = this.querySelector('.click-hint');
+                if (currentHint) currentHint.textContent = '';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>
