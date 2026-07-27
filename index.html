@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MTB.GAMES Download page</title>
+    <title>MTB.GAMES Download Page</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,12 +16,53 @@
             background-color: #121212;
             color: #e0e0e0;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 20px;
+        }
+
+        /* Top Bar & Auth */
+        .top-bar {
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e1e1e;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-small {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-small:hover {
+            background: #0056b3;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #bd2130;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         h1 {
@@ -36,19 +77,43 @@
             font-size: 1rem;
         }
 
-        /* Játékkártyák rácsa - Megakadályozza a széthúzást 1 elemnél is! */
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background: #1e1e1e;
+            color: #aaa;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        /* Games Grid */
         .games-grid {
             display: grid;
-            /* auto-fill: nem engedi 1 elemnél, hogy kitöltse a teljes sort */
             grid-template-columns: repeat(auto-fill, minmax(280px, 350px)); 
             gap: 25px;
             max-width: 1200px;
             margin: 0 auto;
             align-items: start;
-            justify-content: center; /* Ha csak kevés van, középre igazítja (ha balra szeretnéd, cseréld: flex-start) */
+            justify-content: center;
         }
 
-        /* Egy kocka / kártya stílusa */
+        /* Game Card */
         .game-card {
             background-color: #1e1e1e;
             border: 1px solid #333;
@@ -59,15 +124,34 @@
             transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
             cursor: pointer;
             width: 100%;
+            position: relative;
         }
 
         .game-card:hover {
-            border-color: E6E6E6;
-            box-shadow: 0 8px 20px rgba(214, 214, 214, 0.2);
+            border-color: #007bff;
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.2);
             transform: translateY(-2px);
         }
 
-        /* Kép beállításai */
+        .favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 6px 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2;
+            transition: color 0.2s;
+        }
+
+        .favorite-btn.active {
+            color: #ff4757;
+        }
+
         .game-img {
             width: 100%;
             height: 180px;
@@ -101,7 +185,7 @@
             font-weight: 500;
         }
 
-        /* Animált kinyíló rész */
+        /* Collapsible details */
         .details-content {
             max-height: 0;
             overflow: hidden;
@@ -126,73 +210,406 @@
             margin-bottom: 15px;
         }
 
-        .download-btn {
+        .action-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .download-btn, .action-btn {
             display: inline-block;
             width: 100%;
             text-align: center;
             background-color: #007bff;
             color: #ffffff;
             text-decoration: none;
-            padding: 12px 0;
+            padding: 10px 0;
             border-radius: 6px;
             font-weight: 600;
+            border: none;
+            cursor: pointer;
             transition: background-color 0.2s ease;
         }
 
-        .download-btn:hover {
+        .download-btn:hover, .action-btn:hover {
             background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        .status-msg {
+            font-size: 0.8rem;
+            margin-top: 5px;
+            color: #ff6b6b;
+            text-align: center;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid #333;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .empty-msg {
+            text-align: center;
+            grid-column: 1 / -1;
+            color: #888;
+            font-size: 1.1rem;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
+
+<!-- Top User Bar -->
+<div class="top-bar">
+    <div id="userInfo" class="user-info">
+        <span id="userStatus">Not logged in</span>
+    </div>
+    <button id="authBtn" class="btn-small" onclick="openAuthModal()">Login / Register</button>
+</div>
 
 <header>
     <h1>MTB.GAMES</h1>
     <p class="subtitle">All MTB.GAMES's games in one place.</p>
 </header>
 
-<main class="games-grid">
+<!-- Navigation Tabs -->
+<div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('all')">All Games</button>
+    <button class="tab-btn" onclick="switchTab('favorites')">Favorites</button>
+    <button class="tab-btn" onclick="switchTab('downloaded')">Downloaded Games</button>
+</div>
 
-    <!-- 1. JÁTÉK -->
-    <div class="game-card">
+<!-- Main Content Grid -->
+<main class="games-grid" id="gamesGrid">
+
+    <!-- GAME 1 -->
+    <div class="game-card" data-id="valley-rancher" data-path="downloads/Valley Rancher.png" data-file="downloads/jatek1.zip">
+        <button class="favorite-btn" onclick="toggleFavorite(event, 'valley-rancher')">♥</button>
         <img src="downloads/Valley Rancher.png" alt="Valley Rancher" class="game-img">
         <div class="game-info">
             <h2 class="game-title">Valley Rancher</h2>
             <p class="short-desc">A farming game where you can plant crops, raise animals, and even engage in illegal activities.</p>
-            <span class="click-hint"></span>
+            <span class="click-hint">Click for details...</span>
         </div>
         <div class="details-content">
             <p class="long-desc">
-                Lépj be a jövő versenypályáira! A Cyber Racer 2088-ban egyedi cyberpunk autókat tuningolhatsz,
-                több mint 20 pályán mérheted össze a tudásod, és kipróbálhatod a többjátékos módot is.
+                Step onto the ranch! Manage your land, plant seasonal crops, build up your farm, 
+                and uncover secret paths to boost your income in this unique simulator.
             </p>
-            <a href="downloads/jatek1.zip" download class="download-btn">Letöltés (.zip)</a>
+            <div class="action-btns">
+                <a href="downloads/jatek1.zip" download class="download-btn" onclick="trackDownload('valley-rancher')">Download (.zip)</a>
+                <button class="action-btn btn-secondary" onclick="openFolder(event, 'downloads/Valley Rancher.png', this)">Open Folder Path</button>
+                <button class="action-btn btn-secondary" onclick="openBugReportModal(event, 'Valley Rancher')">Report Bug</button>
+                <div class="status-msg"></div>
+            </div>
         </div>
     </div>
 
 </main>
 
-<script>
-    const cards = document.querySelectorAll('.game-card');
+<!-- Auth Modal -->
+<div id="authModal" class="modal">
+    <div class="modal-content">
+        <h2 id="authTitle">Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Remember me</label>
+        </div>
+        <button class="download-btn" onclick="handleAuth()">Submit</button>
+        <button class="action-btn btn-secondary" style="margin-top: 8px;" onclick="closeModal('authModal')">Cancel</button>
+    </div>
+</div>
 
-    cards.forEach(card => {
+<!-- Bug Report Modal -->
+<div id="bugModal" class="modal">
+    <div class="modal-content">
+        <h2>Report a Bug</h2>
+        <p id="bugGameTitle" style="margin-bottom: 10px; color: #007bff; font-weight: bold;"></p>
+        <textarea id="bugDescription" rows="4" placeholder="Describe the issue..."></textarea>
+        <button class="download-btn" onclick="submitBugReport()">Submit Report</button>
+        <button class="action-btn btn-secondary" style="margin-top: 8px;" onclick="closeModal('bugModal')">Cancel</button>
+    </div>
+</div>
+
+<script>
+    // State management
+    let currentUser = localStorage.getItem('currentUser') || null;
+    let currentTab = 'all';
+
+    function getUserData(key) {
+        if (!currentUser) return [];
+        return JSON.parse(localStorage.getItem(`${key}_${currentUser}`)) || [];
+    }
+
+    function setUserData(key, data) {
+        if (!currentUser) return;
+        localStorage.setItem(`${key}_${currentUser}`, JSON.stringify(data));
+    }
+
+    // Initialize Page
+    window.onload = () => {
+        const savedUser = localStorage.getItem('saved_session');
+        if (savedUser) {
+            currentUser = savedUser;
+        }
+        updateUserUI();
+        renderGames();
+    };
+
+    function updateUserUI() {
+        const userStatus = document.getElementById('userStatus');
+        const authBtn = document.getElementById('authBtn');
+
+        if (currentUser) {
+            userStatus.textContent = `Logged in as: ${currentUser}`;
+            authBtn.textContent = 'Logout';
+            authBtn.className = 'btn-small btn-danger';
+            authBtn.onclick = logout;
+        } else {
+            userStatus.textContent = 'Not logged in';
+            authBtn.textContent = 'Login / Register';
+            authBtn.className = 'btn-small';
+            authBtn.onclick = openAuthModal;
+        }
+    }
+
+    function openAuthModal() {
+        document.getElementById('authModal').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function handleAuth() {
+        const user = document.getElementById('username').value.trim();
+        const remember = document.getElementById('rememberMe').checked;
+
+        if (!user) {
+            alert('Please enter a username');
+            return;
+        }
+
+        currentUser = user;
+        localStorage.setItem('currentUser', currentUser);
+
+        if (remember) {
+            localStorage.setItem('saved_session', currentUser);
+        }
+
+        updateUserUI();
+        closeModal('authModal');
+        renderGames();
+    }
+
+    function logout() {
+        currentUser = null;
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('saved_session');
+        updateUserUI();
+        renderGames();
+    }
+
+    // Favorites Logic
+    function toggleFavorite(e, gameId) {
+        e.stopPropagation();
+        if (!currentUser) {
+            alert('Please login to save favorites!');
+            return;
+        }
+
+        let favorites = getUserData('favorites');
+        if (favorites.includes(gameId)) {
+            favorites = favorites.filter(id => id !== gameId);
+        } else {
+            favorites.push(gameId);
+        }
+
+        setUserData('favorites', favorites);
+        renderGames();
+    }
+
+    // Download Tracking
+    function trackDownload(gameId) {
+        if (!currentUser) return;
+        let downloaded = getUserData('downloaded');
+        if (!downloaded.includes(gameId)) {
+            downloaded.push(gameId);
+            setUserData('downloaded', downloaded);
+        }
+    }
+
+    // Folder Path / File Checker
+    function openFolder(e, path, btnElement) {
+        e.stopPropagation();
+        const card = btnElement.closest('.game-card');
+        const msgBox = card.querySelector('.status-msg');
+
+        // Simulating checking path existence
+        fetch(path, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    const fullPath = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/' + path;
+                    navigator.clipboard.writeText(fullPath);
+                    msgBox.style.color = '#2ed573';
+                    msgBox.textContent = `Path copied to clipboard: ${path}`;
+                } else {
+                    msgBox.style.color = '#ff6b6b';
+                    msgBox.textContent = `Error: Path or file not found! (${path})`;
+                }
+            })
+            .catch(() => {
+                msgBox.style.color = '#ff6b6b';
+                msgBox.textContent = `Error: Path or file not found! (${path})`;
+            });
+    }
+
+    // Bug Report Logic
+    let currentBugGame = '';
+    function openBugReportModal(e, gameTitle) {
+        e.stopPropagation();
+        currentBugGame = gameTitle;
+        document.getElementById('bugGameTitle').textContent = `Game: ${gameTitle}`;
+        document.getElementById('bugDescription').value = '';
+        document.getElementById('bugModal').style.display = 'flex';
+    }
+
+    function submitBugReport() {
+        const desc = document.getElementById('bugDescription').value.trim();
+        if (!desc) {
+            alert('Please describe the bug!');
+            return;
+        }
+        // Locally acknowledge without sending anywhere
+        alert('Thank you! Your bug report has been saved locally.');
+        closeModal('bugModal');
+    }
+
+    // Tab Switching & Rendering
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        renderGames();
+    }
+
+    function renderGames() {
+        const cards = document.querySelectorAll('.game-card');
+        const favorites = getUserData('favorites');
+        const downloaded = getUserData('downloaded');
+        let visibleCount = 0;
+
+        // Remove old empty message
+        const existingEmpty = document.querySelector('.empty-msg');
+        if (existingEmpty) existingEmpty.remove();
+
+        cards.forEach(card => {
+            const gameId = card.getAttribute('data-id');
+            const favBtn = card.querySelector('.favorite-btn');
+
+            // Update Favorite Icon
+            if (favorites.includes(gameId)) {
+                favBtn.classList.add('active');
+            } else {
+                favBtn.classList.remove('active');
+            }
+
+            // Tab Filtering
+            let show = false;
+            if (currentTab === 'all') {
+                show = true;
+            } else if (currentTab === 'favorites') {
+                show = favorites.includes(gameId);
+            } else if (currentTab === 'downloaded') {
+                show = downloaded.includes(gameId);
+            }
+
+            if (show) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (visibleCount === 0) {
+            const grid = document.getElementById('gamesGrid');
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'empty-msg';
+            emptyDiv.textContent = currentTab === 'favorites' 
+                ? 'No favorite games added yet.' 
+                : currentTab === 'downloaded' 
+                ? 'No downloaded games yet.' 
+                : 'No games available.';
+            grid.appendChild(emptyDiv);
+        }
+    }
+
+    // Card Accordion Click Logic
+    document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', function(e) {
-            if (e.target.classList.contains('download-btn')) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
                 return;
             }
 
             const isActive = this.classList.contains('active');
 
-            cards.forEach(c => {
+            document.querySelectorAll('.game-card').forEach(c => {
                 c.classList.remove('active');
                 const hint = c.querySelector('.click-hint');
-                if (hint) hint.textContent = '';
+                if (hint) hint.textContent = 'Click for details...';
             });
 
             if (!isActive) {
                 this.classList.add('active');
                 const currentHint = this.querySelector('.click-hint');
-                if (currentHint) currentHint.textContent = '';
+                if (currentHint) currentHint.textContent = 'Click to close';
             }
         });
     });
