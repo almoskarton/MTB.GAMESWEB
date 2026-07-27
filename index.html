@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTB.GAMES Download Page</title>
+    <!-- PyQt WebChannel script a Python-JS kommunikációhoz -->
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -19,7 +21,6 @@
             padding: 20px;
         }
 
-        /* Top Bar & Auth */
         .top-bar {
             max-width: 1200px;
             margin: 0 auto 20px auto;
@@ -77,7 +78,6 @@
             font-size: 1rem;
         }
 
-        /* Navigation Tabs */
         .nav-tabs {
             display: flex;
             justify-content: center;
@@ -102,7 +102,6 @@
             border-color: #007bff;
         }
 
-        /* Games Grid */
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 350px)); 
@@ -113,7 +112,6 @@
             justify-content: center;
         }
 
-        /* Game Card */
         .game-card {
             background-color: #1e1e1e;
             border: 1px solid #333;
@@ -185,7 +183,6 @@
             font-weight: 500;
         }
 
-        /* Collapsible details */
         .details-content {
             max-height: 0;
             overflow: hidden;
@@ -250,7 +247,6 @@
             text-align: center;
         }
 
-        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -303,7 +299,6 @@
 </head>
 <body>
 
-<!-- Top User Bar -->
 <div class="top-bar">
     <div id="userInfo" class="user-info">
         <span id="userStatus">Not logged in</span>
@@ -316,18 +311,16 @@
     <p class="subtitle">All MTB.GAMES's games in one place.</p>
 </header>
 
-<!-- Navigation Tabs -->
 <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('all')">All Games</button>
     <button class="tab-btn" onclick="switchTab('favorites')">Favorites</button>
     <button class="tab-btn" onclick="switchTab('downloaded')">Downloaded Games</button>
 </div>
 
-<!-- Main Content Grid -->
 <main class="games-grid" id="gamesGrid">
 
     <!-- GAME 1 -->
-    <div class="game-card" data-id="valley-rancher" data-path="downloads/Valley Rancher.png" data-file="downloads/jatek1.zip">
+    <div class="game-card" data-id="valley-rancher">
         <button class="favorite-btn" onclick="toggleFavorite(event, 'valley-rancher')">♥</button>
         <img src="downloads/Valley Rancher.png" alt="Valley Rancher" class="game-img">
         <div class="game-info">
@@ -342,7 +335,7 @@
             </p>
             <div class="action-btns">
                 <a href="downloads/jatek1.zip" download class="download-btn" onclick="trackDownload('valley-rancher')">Download (.zip)</a>
-                <button class="action-btn btn-secondary" onclick="openFolder(event, 'downloads/Valley Rancher.png', this)">Open Folder Path</button>
+                <button class="action-btn btn-secondary" onclick="openFolder(event, this)">Open Folder Path</button>
                 <button class="action-btn btn-secondary" onclick="openBugReportModal(event, 'Valley Rancher')">Report Bug</button>
                 <div class="status-msg"></div>
             </div>
@@ -351,7 +344,6 @@
 
 </main>
 
-<!-- Auth Modal -->
 <div id="authModal" class="modal">
     <div class="modal-content">
         <h2 id="authTitle">Login</h2>
@@ -366,7 +358,6 @@
     </div>
 </div>
 
-<!-- Bug Report Modal -->
 <div id="bugModal" class="modal">
     <div class="modal-content">
         <h2>Report a Bug</h2>
@@ -378,9 +369,17 @@
 </div>
 
 <script>
-    // State management
     let currentUser = localStorage.getItem('currentUser') || null;
     let currentTab = 'all';
+    let lastDownloadedGameId = null;
+    let pyBridge = null;
+
+    // WebChannel beállítása a Python kommunikációhoz
+    if (typeof QWebChannel !== 'undefined') {
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+            pyBridge = channel.objects.pyBridge;
+        });
+    }
 
     function getUserData(key) {
         if (!currentUser) return [];
@@ -392,7 +391,6 @@
         localStorage.setItem(`${key}_${currentUser}`, JSON.stringify(data));
     }
 
-    // Initialize Page
     window.onload = () => {
         const savedUser = localStorage.getItem('saved_session');
         if (savedUser) {
@@ -456,7 +454,6 @@
         renderGames();
     }
 
-    // Favorites Logic
     function toggleFavorite(e, gameId) {
         e.stopPropagation();
         if (!currentUser) {
@@ -475,8 +472,8 @@
         renderGames();
     }
 
-    // Download Tracking
     function trackDownload(gameId) {
+        lastDownloadedGameId = gameId;
         if (!currentUser) return;
         let downloaded = getUserData('downloaded');
         if (!downloaded.includes(gameId)) {
@@ -485,32 +482,48 @@
         }
     }
 
-    // Folder Path / File Checker
-    function openFolder(e, path, btnElement) {
-        e.stopPropagation();
-        const card = btnElement.closest('.game-card');
-        const msgBox = card.querySelector('.status-msg');
-
-        // Simulating checking path existence
-        fetch(path, { method: 'HEAD' })
-            .then(response => {
-                if (response.ok) {
-                    const fullPath = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/' + path;
-                    navigator.clipboard.writeText(fullPath);
-                    msgBox.style.color = '#2ed573';
-                    msgBox.textContent = `Path copied to clipboard: ${path}`;
-                } else {
-                    msgBox.style.color = '#ff6b6b';
-                    msgBox.textContent = `Error: Path or file not found! (${path})`;
-                }
-            })
-            .catch(() => {
-                msgBox.style.color = '#ff6b6b';
-                msgBox.textContent = `Error: Path or file not found! (${path})`;
-            });
+    // A Python hívja meg a letöltés/kicsomagolás után
+    function setInstalledPath(folderPath) {
+        if (lastDownloadedGameId && currentUser) {
+            let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
+            paths[lastDownloadedGameId] = folderPath;
+            localStorage.setItem(`paths_${currentUser}`, JSON.stringify(paths));
+        }
     }
 
-    // Bug Report Logic
+    // Mappa megnyitása gomb kezelője
+    function openFolder(e, btnElement) {
+        e.stopPropagation();
+        const card = btnElement.closest('.game-card');
+        const gameId = card.getAttribute('data-id');
+        const msgBox = card.querySelector('.status-msg');
+
+        if (!currentUser) {
+            msgBox.style.color = '#ff6b6b';
+            msgBox.textContent = 'Please log in to open installed folder!';
+            return;
+        }
+
+        let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
+        const installedPath = paths[gameId];
+
+        if (installedPath) {
+            if (pyBridge) {
+                // Átküldi a Pythonnak az útvonalat, ami felnyitja a Fájlkezelőt
+                pyBridge.open_folder(installedPath);
+                msgBox.style.color = '#2ed573';
+                msgBox.textContent = `Opening folder...`;
+            } else {
+                navigator.clipboard.writeText(installedPath);
+                msgBox.style.color = '#2ed573';
+                msgBox.textContent = `Path copied to clipboard: ${installedPath}`;
+            }
+        } else {
+            msgBox.style.color = '#ff6b6b';
+            msgBox.textContent = 'Error: Game is not downloaded or path not found!';
+        }
+    }
+
     let currentBugGame = '';
     function openBugReportModal(e, gameTitle) {
         e.stopPropagation();
@@ -526,12 +539,10 @@
             alert('Please describe the bug!');
             return;
         }
-        // Locally acknowledge without sending anywhere
         alert('Thank you! Your bug report has been saved locally.');
         closeModal('bugModal');
     }
 
-    // Tab Switching & Rendering
     function switchTab(tab) {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -545,7 +556,6 @@
         const downloaded = getUserData('downloaded');
         let visibleCount = 0;
 
-        // Remove old empty message
         const existingEmpty = document.querySelector('.empty-msg');
         if (existingEmpty) existingEmpty.remove();
 
@@ -553,14 +563,12 @@
             const gameId = card.getAttribute('data-id');
             const favBtn = card.querySelector('.favorite-btn');
 
-            // Update Favorite Icon
             if (favorites.includes(gameId)) {
                 favBtn.classList.add('active');
             } else {
                 favBtn.classList.remove('active');
             }
 
-            // Tab Filtering
             let show = false;
             if (currentTab === 'all') {
                 show = true;
@@ -591,7 +599,6 @@
         }
     }
 
-    // Card Accordion Click Logic
     document.querySelectorAll('.game-card').forEach(card => {
         card.addEventListener('click', function(e) {
             if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
