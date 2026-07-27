@@ -232,6 +232,15 @@
             background-color: #0056b3;
         }
 
+        .btn-play {
+            background-color: #2ed573;
+            color: #000;
+        }
+
+        .btn-play:hover {
+            background-color: #26af5f;
+        }
+
         .btn-secondary {
             background-color: #333;
         }
@@ -319,8 +328,8 @@
 
 <main class="games-grid" id="gamesGrid">
 
-    <!-- GAME 1 -->
-    <div class="game-card" data-id="valley-rancher">
+    <!-- GAME 1 (Itt állíthatod be a data-exe értékét pl. alma.exe-re) -->
+    <div class="game-card" data-id="valley-rancher" data-exe="alma.exe">
         <button class="favorite-btn" onclick="toggleFavorite(event, 'valley-rancher')">♥</button>
         <img src="downloads/Valley Rancher.png" alt="Valley Rancher" class="game-img">
         <div class="game-info">
@@ -335,7 +344,8 @@
             </p>
             <div class="action-btns">
                 <a href="downloads/jatek1.zip" download class="download-btn" onclick="trackDownload('valley-rancher')">Download (.zip)</a>
-                <button class="action-btn btn-secondary" onclick="openFolder(event, this)">Open Folder Path</button>
+                <button class="action-btn btn-play" onclick="launchGame(event, this)">▶ Play Game</button>
+                <button class="action-btn btn-secondary" onclick="openFolder(event, this)">Open Folder</button>
                 <button class="action-btn btn-secondary" onclick="openBugReportModal(event, 'Valley Rancher')">Report Bug</button>
                 <div class="status-msg"></div>
             </div>
@@ -374,7 +384,6 @@
     let lastDownloadedGameId = null;
     let pyBridge = null;
 
-    // WebChannel inicializálása a Python kapcsolathoz
     if (typeof QWebChannel !== 'undefined') {
         new QWebChannel(qt.webChannelTransport, function (channel) {
             pyBridge = channel.objects.pyBridge;
@@ -482,7 +491,6 @@
         }
     }
 
-    // A Python futtatja le kicsomagolás után
     function setInstalledPath(folderPath) {
         if (lastDownloadedGameId && currentUser) {
             let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
@@ -491,7 +499,36 @@
         }
     }
 
-    // Mappa megnyitó gomb
+    // JÁTÉK INDÍTÁSA A HTML-BEN MEGADOTT FÁJLAL
+    function launchGame(e, btnElement) {
+        e.stopPropagation();
+        const card = btnElement.closest('.game-card');
+        const gameId = card.getAttribute('data-id');
+        const exeName = card.getAttribute('data-exe') || 'game.exe'; // HTML-ből kiolvasott fájlnév
+        const msgBox = card.querySelector('.status-msg');
+
+        if (!currentUser) {
+            msgBox.style.color = '#ff6b6b';
+            msgBox.textContent = 'Please log in to play!';
+            return;
+        }
+
+        let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
+        const installedPath = paths[gameId];
+
+        if (installedPath) {
+            if (pyBridge) {
+                pyBridge.launch_game(installedPath, exeName);
+                msgBox.style.color = '#2ed573';
+                msgBox.textContent = `Launching ${exeName}...`;
+            }
+        } else {
+            msgBox.style.color = '#ff6b6b';
+            msgBox.textContent = 'Error: Game is not downloaded yet!';
+        }
+    }
+
+    // MAPPA MEGNYITÁSA
     function openFolder(e, btnElement) {
         e.stopPropagation();
         const card = btnElement.closest('.game-card');
@@ -500,7 +537,7 @@
 
         if (!currentUser) {
             msgBox.style.color = '#ff6b6b';
-            msgBox.textContent = 'Please log in to open installed folder!';
+            msgBox.textContent = 'Please log in to open folder!';
             return;
         }
 
@@ -512,14 +549,10 @@
                 pyBridge.open_folder(installedPath);
                 msgBox.style.color = '#2ed573';
                 msgBox.textContent = `Opening folder...`;
-            } else {
-                navigator.clipboard.writeText(installedPath);
-                msgBox.style.color = '#2ed573';
-                msgBox.textContent = `Path copied: ${installedPath}`;
             }
         } else {
             msgBox.style.color = '#ff6b6b';
-            msgBox.textContent = 'Error: Game is not downloaded or path not found!';
+            msgBox.textContent = 'Error: Game is not downloaded yet!';
         }
     }
 
