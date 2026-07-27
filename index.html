@@ -374,7 +374,7 @@
     let lastDownloadedGameId = null;
     let pyBridge = null;
 
-    // WebChannel beállítása a Python kommunikációhoz
+    // WebChannel inicializálása a Python kapcsolathoz
     if (typeof QWebChannel !== 'undefined') {
         new QWebChannel(qt.webChannelTransport, function (channel) {
             pyBridge = channel.objects.pyBridge;
@@ -482,7 +482,7 @@
         }
     }
 
-    // A Python hívja meg a letöltés/kicsomagolás után
+    // A Python futtatja le kicsomagolás után
     function setInstalledPath(folderPath) {
         if (lastDownloadedGameId && currentUser) {
             let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
@@ -491,7 +491,7 @@
         }
     }
 
-    // Mappa megnyitása gomb kezelője
+    // Mappa megnyitó gomb
     function openFolder(e, btnElement) {
         e.stopPropagation();
         const card = btnElement.closest('.game-card');
@@ -509,14 +509,13 @@
 
         if (installedPath) {
             if (pyBridge) {
-                // Átküldi a Pythonnak az útvonalat, ami felnyitja a Fájlkezelőt
                 pyBridge.open_folder(installedPath);
                 msgBox.style.color = '#2ed573';
                 msgBox.textContent = `Opening folder...`;
             } else {
                 navigator.clipboard.writeText(installedPath);
                 msgBox.style.color = '#2ed573';
-                msgBox.textContent = `Path copied to clipboard: ${installedPath}`;
+                msgBox.textContent = `Path copied: ${installedPath}`;
             }
         } else {
             msgBox.style.color = '#ff6b6b';
