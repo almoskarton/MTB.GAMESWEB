@@ -532,13 +532,23 @@
         document.getElementById('bugModal').style.display = 'flex';
     }
 
+    // FRISSÍTVE: Meghívja a Python-ban megírt send_report metódust
     function submitBugReport() {
         const desc = document.getElementById('bugDescription').value.trim();
         if (!desc) {
             alert('Please describe the bug!');
             return;
         }
-        alert('Thank you! Your bug report has been saved locally.');
+
+        if (pyBridge && typeof pyBridge.send_report === 'function') {
+            // Felhasználónév hozzáadása a leíráshoz, ha be van jelentkezve
+            const userText = currentUser ? ` [Bejelentő: ${currentUser}]` : ' [Anonim]';
+            pyBridge.send_report(currentBugGame, desc + userText);
+            alert('Thank you! Your report has been sent to the developer.');
+        } else {
+            alert('Thank you! Your bug report has been saved locally. (Python bridge not connected)');
+        }
+
         closeModal('bugModal');
     }
 
