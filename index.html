@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTB.GAMES Download Page</title>
-    <!-- PyQt WebChannel script a Python-JS kommunikációhoz -->
-    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -21,6 +19,7 @@
             padding: 20px;
         }
 
+        /* Top Bar & Auth */
         .top-bar {
             max-width: 1200px;
             margin: 0 auto 20px auto;
@@ -37,6 +36,32 @@
             display: flex;
             align-items: center;
             gap: 15px;
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #007bff;
+            background-color: #2a2a2a;
+        }
+
+        .avatar-upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #444;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
         }
 
         .btn-small {
@@ -78,6 +103,7 @@
             font-size: 1rem;
         }
 
+        /* Navigation Tabs */
         .nav-tabs {
             display: flex;
             justify-content: center;
@@ -102,6 +128,7 @@
             border-color: #007bff;
         }
 
+        /* Games Grid */
         .games-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 350px)); 
@@ -112,6 +139,7 @@
             justify-content: center;
         }
 
+        /* Game Card */
         .game-card {
             background-color: #1e1e1e;
             border: 1px solid #333;
@@ -183,6 +211,7 @@
             font-weight: 500;
         }
 
+        /* Collapsible details */
         .details-content {
             max-height: 0;
             overflow: hidden;
@@ -247,6 +276,7 @@
             text-align: center;
         }
 
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -288,6 +318,18 @@
             margin-bottom: 15px;
         }
 
+        .auth-switch {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .auth-switch:hover {
+            color: #007bff;
+        }
+
         .empty-msg {
             text-align: center;
             grid-column: 1 / -1;
@@ -299,11 +341,12 @@
 </head>
 <body>
 
+<!-- Top User Bar -->
 <div class="top-bar">
     <div id="userInfo" class="user-info">
         <span id="userStatus">Not logged in</span>
     </div>
-    <button id="authBtn" class="btn-small" onclick="openAuthModal()">Login / Register</button>
+    <button id="authBtn" class="btn-small" onclick="openAuthModal('login')">Login / Register</button>
 </div>
 
 <header>
@@ -311,16 +354,18 @@
     <p class="subtitle">All MTB.GAMES's games in one place.</p>
 </header>
 
+<!-- Navigation Tabs -->
 <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('all')">All Games</button>
     <button class="tab-btn" onclick="switchTab('favorites')">Favorites</button>
     <button class="tab-btn" onclick="switchTab('downloaded')">Downloaded Games</button>
 </div>
 
+<!-- Main Content Grid -->
 <main class="games-grid" id="gamesGrid">
 
     <!-- GAME 1 -->
-    <div class="game-card" data-id="valley-rancher">
+    <div class="game-card" data-id="valley-rancher" data-path="downloads/Valley Rancher.png" data-file="downloads/jatek1.zip">
         <button class="favorite-btn" onclick="toggleFavorite(event, 'valley-rancher')">♥</button>
         <img src="downloads/Valley Rancher.png" alt="Valley Rancher" class="game-img">
         <div class="game-info">
@@ -335,7 +380,7 @@
             </p>
             <div class="action-btns">
                 <a href="downloads/jatek1.zip" download class="download-btn" onclick="trackDownload('valley-rancher')">Download (.zip)</a>
-                <button class="action-btn btn-secondary" onclick="openFolder(event, this)">Open Folder Path</button>
+                <button class="action-btn btn-secondary" onclick="openFolder(event, 'downloads/Valley Rancher.png', this)">Open Folder Path</button>
                 <button class="action-btn btn-secondary" onclick="openBugReportModal(event, 'Valley Rancher')">Report Bug</button>
                 <div class="status-msg"></div>
             </div>
@@ -344,20 +389,32 @@
 
 </main>
 
+<!-- Auth Modal -->
 <div id="authModal" class="modal">
     <div class="modal-content">
         <h2 id="authTitle">Login</h2>
         <input type="text" id="username" placeholder="Username">
         <input type="password" id="password" placeholder="Password">
-        <div class="remember-me">
+        
+        <div id="registerExtra" style="display:none;">
+            <div class="avatar-upload-container">
+                <img id="avatarPreview" class="preview-avatar" src="" alt="Avatar" style="display:none;">
+                <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatarImage(event)">
+            </div>
+        </div>
+
+        <div class="remember-me" id="rememberContainer">
             <input type="checkbox" id="rememberMe">
             <label for="rememberMe">Remember me</label>
         </div>
-        <button class="download-btn" onclick="handleAuth()">Submit</button>
+        
+        <button class="download-btn" id="authSubmitBtn" onclick="handleAuth()">Login</button>
+        <div class="auth-switch" id="authSwitchText" onclick="toggleAuthMode()">Don't have an account? Register</div>
         <button class="action-btn btn-secondary" style="margin-top: 8px;" onclick="closeModal('authModal')">Cancel</button>
     </div>
 </div>
 
+<!-- Bug Report Modal -->
 <div id="bugModal" class="modal">
     <div class="modal-content">
         <h2>Report a Bug</h2>
@@ -369,17 +426,11 @@
 </div>
 
 <script>
+    // State management
     let currentUser = localStorage.getItem('currentUser') || null;
     let currentTab = 'all';
-    let lastDownloadedGameId = null;
-    let pyBridge = null;
-
-    // WebChannel inicializálása a Python kapcsolathoz
-    if (typeof QWebChannel !== 'undefined') {
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-            pyBridge = channel.objects.pyBridge;
-        });
-    }
+    let isRegisterMode = false;
+    let tempAvatarBase64 = '';
 
     function getUserData(key) {
         if (!currentUser) return [];
@@ -391,6 +442,7 @@
         localStorage.setItem(`${key}_${currentUser}`, JSON.stringify(data));
     }
 
+    // Initialize Page
     window.onload = () => {
         const savedUser = localStorage.getItem('saved_session');
         if (savedUser) {
@@ -401,49 +453,109 @@
     };
 
     function updateUserUI() {
-        const userStatus = document.getElementById('userStatus');
+        const userInfo = document.getElementById('userInfo');
         const authBtn = document.getElementById('authBtn');
 
         if (currentUser) {
-            userStatus.textContent = `Logged in as: ${currentUser}`;
+            let usersDb = JSON.parse(localStorage.getItem('users_db')) || {};
+            let userAvatar = usersDb[currentUser] && usersDb[currentUser].avatar ? usersDb[currentUser].avatar : '';
+
+            userInfo.innerHTML = `
+                ${userAvatar ? `<img src="${userAvatar}" class="profile-avatar" alt="Avatar">` : ''}
+                <span id="userStatus">Logged in as: <b>${currentUser}</b></span>
+            `;
             authBtn.textContent = 'Logout';
             authBtn.className = 'btn-small btn-danger';
             authBtn.onclick = logout;
         } else {
-            userStatus.textContent = 'Not logged in';
+            userInfo.innerHTML = '<span id="userStatus">Not logged in</span>';
             authBtn.textContent = 'Login / Register';
             authBtn.className = 'btn-small';
-            authBtn.onclick = openAuthModal;
+            authBtn.onclick = () => openAuthModal('login');
         }
     }
 
-    function openAuthModal() {
+    function openAuthModal(mode) {
+        isRegisterMode = (mode === 'register');
+        document.getElementById('authTitle').textContent = isRegisterMode ? 'Register' : 'Login';
+        document.getElementById('authSubmitBtn').textContent = isRegisterMode ? 'Register' : 'Login';
+        document.getElementById('registerExtra').style.display = isRegisterMode ? 'block' : 'none';
+        document.getElementById('rememberContainer').style.display = isRegisterMode ? 'none' : 'flex';
+        document.getElementById('authSwitchText').textContent = isRegisterMode ? 'Already have an account? Login' : "Don't have an account? Register";
+        
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        tempAvatarBase64 = '';
+        document.getElementById('avatarPreview').style.display = 'none';
+        document.getElementById('avatarInput').value = '';
+
         document.getElementById('authModal').style.display = 'flex';
+    }
+
+    function toggleAuthMode() {
+        openAuthModal(isRegisterMode ? 'login' : 'register');
     }
 
     function closeModal(id) {
         document.getElementById(id).style.display = 'none';
     }
 
+    function previewAvatarImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempAvatarBase64 = e.target.result;
+                const preview = document.getElementById('avatarPreview');
+                preview.src = tempAvatarBase64;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
     function handleAuth() {
         const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value;
         const remember = document.getElementById('rememberMe').checked;
 
-        if (!user) {
-            alert('Please enter a username');
+        if (!user || !pass) {
+            alert('Please enter both username and password!');
             return;
         }
 
-        currentUser = user;
-        localStorage.setItem('currentUser', currentUser);
+        let usersDb = JSON.parse(localStorage.getItem('users_db')) || {};
 
-        if (remember) {
-            localStorage.setItem('saved_session', currentUser);
+        if (isRegisterMode) {
+            if (usersDb[user]) {
+                alert('Username already exists! Please choose another one.');
+                return;
+            }
+            usersDb[user] = {
+                password: pass,
+                avatar: tempAvatarBase64 || ''
+            };
+            localStorage.setItem('users_db', JSON.stringify(usersDb));
+            alert('Registration successful! You can now log in.');
+            openAuthModal('login');
+            return;
+        } else {
+            if (!usersDb[user] || usersDb[user].password !== pass) {
+                alert('Invalid username or password!');
+                return;
+            }
+
+            currentUser = user;
+            localStorage.setItem('currentUser', currentUser);
+
+            if (remember) {
+                localStorage.setItem('saved_session', currentUser);
+            }
+
+            updateUserUI();
+            closeModal('authModal');
+            renderGames();
         }
-
-        updateUserUI();
-        closeModal('authModal');
-        renderGames();
     }
 
     function logout() {
@@ -454,6 +566,7 @@
         renderGames();
     }
 
+    // Favorites Logic
     function toggleFavorite(e, gameId) {
         e.stopPropagation();
         if (!currentUser) {
@@ -472,8 +585,8 @@
         renderGames();
     }
 
+    // Download Tracking
     function trackDownload(gameId) {
-        lastDownloadedGameId = gameId;
         if (!currentUser) return;
         let downloaded = getUserData('downloaded');
         if (!downloaded.includes(gameId)) {
@@ -482,47 +595,33 @@
         }
     }
 
-    // A Python futtatja le kicsomagolás után
-    function setInstalledPath(folderPath) {
-        if (lastDownloadedGameId && currentUser) {
-            let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
-            paths[lastDownloadedGameId] = folderPath;
-            localStorage.setItem(`paths_${currentUser}`, JSON.stringify(paths));
-        }
-    }
-
-    // Mappa megnyitó gomb
-    function openFolder(e, btnElement) {
+    // Folder Path / File Checker
+    function openFolder(e, path, btnElement) {
         e.stopPropagation();
         const card = btnElement.closest('.game-card');
-        const gameId = card.getAttribute('data-id');
         const msgBox = card.querySelector('.status-msg');
 
-        if (!currentUser) {
-            msgBox.style.color = '#ff6b6b';
-            msgBox.textContent = 'Please log in to open installed folder!';
-            return;
-        }
-
-        let paths = JSON.parse(localStorage.getItem(`paths_${currentUser}`)) || {};
-        const installedPath = paths[gameId];
-
-        if (installedPath) {
-            if (pyBridge) {
-                pyBridge.open_folder(installedPath);
-                msgBox.style.color = '#2ed573';
-                msgBox.textContent = `Opening folder...`;
-            } else {
-                navigator.clipboard.writeText(installedPath);
-                msgBox.style.color = '#2ed573';
-                msgBox.textContent = `Path copied: ${installedPath}`;
-            }
-        } else {
-            msgBox.style.color = '#ff6b6b';
-            msgBox.textContent = 'Error: Game is not downloaded or path not found!';
-        }
+        fetch(path, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    const fullPath = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/' + path;
+                    if (window.pyBridge) {
+                        window.pyBridge.open_folder(fullPath);
+                    }
+                    msgBox.style.color = '#2ed573';
+                    msgBox.textContent = `Path opened / copied: ${path}`;
+                } else {
+                    msgBox.style.color = '#ff6b6b';
+                    msgBox.textContent = `Error: Path or file not found! (${path})`;
+                }
+            })
+            .catch(() => {
+                msgBox.style.color = '#ff6b6b';
+                msgBox.textContent = `Error: Path or file not found! (${path})`;
+            });
     }
 
+    // Bug Report Logic
     let currentBugGame = '';
     function openBugReportModal(e, gameTitle) {
         e.stopPropagation();
@@ -532,26 +631,20 @@
         document.getElementById('bugModal').style.display = 'flex';
     }
 
-    // FRISSÍTVE: Meghívja a Python-ban megírt send_report metódust
     function submitBugReport() {
         const desc = document.getElementById('bugDescription').value.trim();
         if (!desc) {
             alert('Please describe the bug!');
             return;
         }
-
-        if (pyBridge && typeof pyBridge.send_report === 'function') {
-            // Felhasználónév hozzáadása a leíráshoz, ha be van jelentkezve
-            const userText = currentUser ? ` [Bejelentő: ${currentUser}]` : ' [Anonim]';
-            pyBridge.send_report(currentBugGame, desc + userText);
-            alert('Thank you! Your report has been sent to the developer.');
-        } else {
-            alert('Thank you! Your bug report has been saved locally. (Python bridge not connected)');
+        if (window.pyBridge) {
+            window.pyBridge.send_report(currentBugGame, desc);
         }
-
+        alert('Thank you! Your bug report has been submitted.');
         closeModal('bugModal');
     }
 
+    // Tab Switching & Rendering
     function switchTab(tab) {
         currentTab = tab;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
